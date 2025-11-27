@@ -1,0 +1,6 @@
+YOLOv8
+apiflask
+pandas
+numpy
+cv2
+marshmallow

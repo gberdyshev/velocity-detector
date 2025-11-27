@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Velocity enjooy
+  version: '1.0'
+servers:
+  - url: https://localhost:8080/api/v1
+
+paths:
+
+  /detect:
+    post:
+      summary: Детект объектов из кадра
+      operationId: DetectObjects
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [frame_file]
+              properties:
+                frame_file:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: Детект успешен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DetectObject'
+                      
+  /jobs:
+    post:
+      summary: Загрузка видео и обработка объекта (создание задачи)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - pixel_size
+                - video_file
+                - selected_frame_time
+                - detect_object
+              properties:
+                pixel_size:
+                  type: number
+                  description: в метрах
+                video_file:
+                  type: string
+                  format: binary
+                selected_frame_time:
+                  type: number
+                  description: время кадра, на котором был выбран объект для трекинга
+                detect_object:
+                  $ref: '#/components/schemas/DetectObject'
+      responses:
+        '200':
+          description: Ок
+          content:
+           application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  
+    
+  /jobs/{id}:
+    get:
+      summary: Получение результатов задачи
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            
+      responses:
+        '200':
+          description: Ок
+          content:
+           application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  
+  /jobs/{id}/cancel:
+    get:
+      summary: Отмена задачи
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            
+      responses:
+        '200':
+          description: Ок
+          content:
+           application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+  
+  
+components:
+  schemas:
+    DetectObject:
+      type: object
+      properties:
+        center_x: 
+          type: number
+        center_y: 
+          type: number
+        width: 
+          type: number
+        height:
+          type: number
+        obj_type:
+          type: string
+          example: car
+        id:
+          type: integer
+          example: 1
+    
+    Result:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            x:
+              type: array
+              items:
+                type: number
+            y:
+              type: array
+              items:
+                type: number
+            v_x:
+              type: array
+              items:
+                type: number
+            v_y:
+              type: array
+              items:
+                type: number
+            v:
+              type: array
+              items:
+                type: number
+            a_x:
+              type: array
+              items:
+                type: number
+            a_y:
+              type: array
+              items:
+                type: number
+            a:
+              type: array
+              items:
+                type: number
+            time:
+              type: array
+              items:
+                type: number
+
+        
+          
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: integer
+    
+
+
+
