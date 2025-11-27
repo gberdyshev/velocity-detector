@@ -2,5 +2,5 @@ YOLOv8
 apiflask
 pandas
 numpy
-cv2
+opencv-python
 marshmallow
