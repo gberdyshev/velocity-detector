@@ -16,9 +16,9 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [frame_file]
+              required: [file]
               properties:
-                frame_file:
+                file:
                   type: string
                   format: binary
         required: true
