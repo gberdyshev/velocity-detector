@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import logging
 from ultralytics import YOLO
+from collections import defaultdict
 
 logging.basicConfig(
     level=logging.INFO, 
