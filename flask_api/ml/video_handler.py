@@ -168,11 +168,3 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
     except Exception as e:
         logging.error(f"Processing failed: {e}")
         print(f"Error: {e}", flush=True)
-        if cap: cap.release()
-        raise e
-    finally:
-        if os.path.exists(video_path):
-            try:
-                os.remove(video_path)
-            except:
-                pass
