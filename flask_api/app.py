@@ -118,3 +118,7 @@ def get_job_result(id):
 async def say_hello():
     await asyncio.sleep(1)
     return {"message": "hello"}
+
+
+if __name__ == "main":
+    app.run(debug=False, host='0.0.0.0', port=5000)

@@ -2,6 +2,7 @@ ultralytics
 apiflask
 pandas
 numpy
+gunicorn
 opencv-python
 marshmallow
 Flask[async]
