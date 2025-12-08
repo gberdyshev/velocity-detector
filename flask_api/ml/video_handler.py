@@ -14,155 +14,164 @@ def calculate_iou(box1, box2):
     Считает IoU для двух прямоугольников в формате [x1, y1, x2, y2].
     """
     # box1 - от пользователя, box2 - от YOLO
-    
     x_left = max(box1[0], box2[0])
     y_top = max(box1[1], box2[1])
     x_right = min(box1[2], box2[2])
     y_bottom = min(box1[3], box2[3])
 
-    if x_right < x_left or y_bottom < y_top:
-        return 0.0
-
+    if x_right < x_left or y_bottom < y_top: return 0.0
     intersection_area = (x_right - x_left) * (y_bottom - y_top)
     area1 = (box1[2] - box1[0]) * (box1[3] - box1[1])
     area2 = (box2[2] - box2[0]) * (box2[3] - box2[1])
-
     union_area = area1 + area2 - intersection_area
-    if union_area == 0:
-        return 0.0
-        
+    if union_area == 0: return 0.0
     return intersection_area / union_area
 
-
-
 def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
+    cap = None
     try:
-        print("Начинаем...")
+        print(f"--- Начинаем обработку: {video_path} ---", flush=True)
         logging.info("Начинаем")
+        
         model = YOLO("./ml/blurry.pt")
         
         cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+             raise ValueError("Не удалось открыть файл видео")
+
         fps = cap.get(cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         target_frame_idx = int(selected_time * fps)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame_idx)
-        
-        ret, frame = cap.read()
-        if not ret:
-            raise ValueError("Не удалось прочитать кадр по указанному времени")
-
-        results = model.track(frame, persist=True)
-        
-        best_iou = 0
-        target_track_id = None
-        
         user_box = [
-        target_box_dict['x1'], 
-        target_box_dict['y1'], 
-        target_box_dict['x2'], 
-        target_box_dict['y2']
+            target_box_dict['x1'], 
+            target_box_dict['y1'], 
+            target_box_dict['x2'], 
+            target_box_dict['y2']
         ]
+
+
+        all_tracks_history = defaultdict(list)
+        selected_track_id = None
         
-        if results[0].boxes.id is None:
-             raise ValueError("На выбранном кадре трекер не нашел объектов")
-
-        boxes_xyxy = results[0].boxes.xyxy.cpu().numpy()
-        track_ids = results[0].boxes.id.int().cpu().numpy()
-
-
-        for box, trk_id in zip(boxes_xyxy, track_ids):
-            iou = calculate_iou(user_box, box)
-            if iou > best_iou:
-                best_iou = iou
-                target_track_id = trk_id
-        
-        if target_track_id is None or best_iou < 0.3:
-            raise ValueError("Не удалось сопоставить объект (низкий IoU или объект не найден)")
-
-
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        current_frame_idx = 0
         
-        raw_data = [] # (time, x, y)
-        
+        print(f"Целевой кадр: {target_frame_idx} из {total_frames}", flush=True)
+
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
             
-            current_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+            current_time = current_frame_idx / fps
+            results = model.track(frame, persist=True, verbose=False)
             
-            res = model.track(frame, persist=True, verbose=False)
-            
-            if res[0].boxes.id is not None:
-                boxes = res[0].boxes.xywh.cpu().numpy()
-                ids = res[0].boxes.id.int().cpu().numpy()
+            if results[0].boxes.id is not None:
+                ids = results[0].boxes.id.int().cpu().numpy()
+                boxes_xyxy = results[0].boxes.xyxy.cpu().numpy() 
+                boxes_wh = results[0].boxes.xywh.cpu().numpy()
                 
-                # Ищем наш ID
-                mask = ids == target_track_id
-                if np.any(mask):
-                    box = boxes[mask][0]
-                    raw_data.append({
+                for i, trk_id in enumerate(ids):
+                    all_tracks_history[trk_id].append({
                         'time': current_time,
-                        'x_px': box[0],
-                        'y_px': box[1]
+                        'x_px': boxes_wh[i][0],
+                        'y_px': boxes_wh[i][1]
                     })
+                
+                if current_frame_idx == target_frame_idx:
+                    print(f"--- Проверка кадра {current_frame_idx} ---", flush=True)
+                    best_iou = 0
+                    best_id = None
+                    
+                    for i, trk_id in enumerate(ids):
+                        iou = calculate_iou(user_box, boxes_xyxy[i])
+                        print(f"ID {trk_id}: IoU {iou:.4f}", flush=True)
+                        if iou > best_iou:
+                            best_iou = iou
+                            best_id = trk_id
+                    
+                    if best_id is not None and best_iou > 0.1:
+                        selected_track_id = best_id
+                        print(f"!!! ОБЪЕКТ НАЙДЕН: ID {selected_track_id} !!!", flush=True)
+                    else:
+                        print("!!! ОБЪЕКТ НЕ НАЙДЕН НА ЦЕЛЕВОМ КАДРЕ !!!", flush=True)
+
+            current_frame_idx += 1
         
         cap.release()
         
+        if selected_track_id is None:
+            raise ValueError("Не удалось сопоставить объект (низкий IoU или объект не найден на указанной секунде)")
+            
+        if selected_track_id not in all_tracks_history:
+            raise ValueError("ID выбран, но история пуста (внутренняя ошибка логики)")
+            
+        raw_data = all_tracks_history[selected_track_id]
+        
         if not raw_data:
-            raise ValueError("Объект потерян сразу и данных нет")
+            raise ValueError("Объект найден, но данных нет")
             
         df = pd.DataFrame(raw_data)
         
-
-        window_size = max(3, int(fps / 4)) 
-        df['x_smooth'] = df['x_px'].rolling(window=window_size, center=True).mean()
-        df['y_smooth'] = df['y_px'].rolling(window=window_size, center=True).mean()
+        smooth_window = max(5, int(fps)) 
         
-        # Удаляем NaN от сглаживания
+        df['x_smooth'] = df['x_px'].rolling(window=smooth_window, center=True).mean()
+        df['y_smooth'] = df['y_px'].rolling(window=smooth_window, center=True).mean()
+        
         df = df.dropna()
         
+        if df.empty:
+            raise ValueError("Слишком короткий трек для анализа")
+
         df['x_m'] = df['x_smooth'] * pixel_size
         df['y_m'] = df['y_smooth'] * pixel_size
         
         df['dt'] = df['time'].diff()
-        df['dx'] = df['x_m'].diff()
-        df['dy'] = df['y_m'].diff()
+        df = df[df['dt'] > 0]
         
-        df['v_x'] = df['dx'] / df['dt']
-        df['v_y'] = df['dy'] / df['dt']
-        
+        df['v_x'] = df['x_m'].diff() / df['dt']
+        df['v_y'] = df['y_m'].diff() / df['dt']
         df['v'] = np.sqrt(df['v_x']**2 + df['v_y']**2)
         
-        df['dv_x'] = df['v_x'].diff()
-        df['dv_y'] = df['v_y'].diff()
+
+        df['v_smooth'] = df['v'].rolling(window=smooth_window, center=True).mean()
+        df['v_x_smooth'] = df['v_x'].rolling(window=smooth_window, center=True).mean()
+        df['v_y_smooth'] = df['v_y'].rolling(window=smooth_window, center=True).mean()
         
-        df['a_x'] = df['dv_x'] / df['dt']
-        df['a_y'] = df['dv_y'] / df['dt']
-        df['a'] = np.sqrt(df['a_x']**2 + df['a_y']**2)
+        df['a'] = df['v_smooth'].diff() / df['dt']
+        df['a_x'] = df['v_x_smooth'].diff() / df['dt']
+        df['a_y'] = df['v_y_smooth'].diff() / df['dt']
         
-        df = df.fillna(0)
+        # Заполняем NaN нулями
+        df = df.fillna(0.0)
         
+        def safe_list(series): return series.tolist()
+
         result_data = {
-            'time': df['time'].tolist(),
-            'x': df['x_m'].tolist(), # в метрах
-            'y': df['y_m'].tolist(),
-            'v_x': df['v_x'].tolist(),
-            'v_y': df['v_y'].tolist(),
-            'v': df['v'].tolist(),
-            'a_x': df['a_x'].tolist(),
-            'a_y': df['a_y'].tolist(),
-            'a': df['a'].tolist(),
+            'time': safe_list(df['time']),
+            'x': safe_list(df['x_m']),
+            'y': safe_list(df['y_m']),
+            'v': safe_list(df['v_smooth']),    
+            'v_x': safe_list(df['v_x_smooth']),
+            'v_y': safe_list(df['v_y_smooth']),
+            'a': safe_list(df['a']),
+            'a_x': safe_list(df['a_x']),
+            'a_y': safe_list(df['a_y']),
         }
 
-        print(result_data)
+        print("Расчет завершен успешно.", flush=True)
         return result_data
-        
-        if os.path.exists(video_path):
-            os.remove(video_path)
 
     except Exception as e:
-        logging.error(e)
-        print(f"Error: {e}")
+        logging.error(f"Processing failed: {e}")
+        print(f"Error: {e}", flush=True)
+        if cap: cap.release()
+        raise e
+    finally:
+        if os.path.exists(video_path):
+            try:
+                os.remove(video_path)
+            except:
+                pass
