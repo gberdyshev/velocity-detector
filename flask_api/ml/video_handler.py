@@ -39,7 +39,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
     try:
         print("Начинаем...")
         logging.info("Начинаем")
-        model = YOLO("./ml/best-3.pt")
+        model = YOLO("./ml/blurry.pt")
         
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)

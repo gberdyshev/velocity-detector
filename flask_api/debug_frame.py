@@ -2,10 +2,12 @@ import cv2
 from ultralytics import YOLO
 
 VIDEO_PATH = "../inputs/cars1.mp4" 
+MODEL_PATH = 'blurry.pt'
+
 # Время, cек кадра
 TARGET_TIME = 0
 
-model = YOLO("./ml/best-3.pt")
+model = YOLO(f"./ml/{MODEL_PATH}")
 
 cap = cv2.VideoCapture(VIDEO_PATH)
 fps = cap.get(cv2.CAP_PROP_FPS)
