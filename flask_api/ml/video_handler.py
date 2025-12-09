@@ -132,8 +132,8 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         df['dt'] = df['time'].diff()
         df = df[df['dt'] > 0]
         
-        df['v_x'] = df['x_m'].diff() / df['dt']
-        df['v_y'] = df['y_m'].diff() / df['dt']
+        df['v_x'] = (df['x_m'].diff() / df['dt']).fillna(0)
+        df['v_y'] = (df['y_m'].diff() / df['dt']).fillna(0)
         df['v'] = np.sqrt(df['v_x']**2 + df['v_y']**2)
         
 
@@ -154,10 +154,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         df['err_x'] = df['x_std_px'] * pixel_size
         df['err_y'] = df['y_std_px'] * pixel_size
 
-        df['v_x_raw'] = (df['x_m'].diff() / df['dt']).fillna(0)
-        df['v_y_raw'] = (df['y_m'].diff() / df['dt']).fillna(0)
-        df['v_raw'] = np.sqrt(df['v_x_raw']**2 + df['v_y_raw']**2)
-        df['err_v'] = df['v_raw'].rolling(window=smooth_window, center=True).std()
+        df['err_v'] = df['v'].rolling(window=smooth_window, center=True).std()
 
 
         
