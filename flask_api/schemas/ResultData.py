@@ -11,3 +11,7 @@ class ResultData(Schema):
     a_y = List(Float())
     a = List(Float())
     time = List(Float())
+
+    err_x = List(Float())
+    err_y = List(Float())
+    err_v = List(Float())

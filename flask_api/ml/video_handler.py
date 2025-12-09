@@ -147,6 +147,19 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         
         # Заполняем NaN нулями
         df = df.fillna(0.0)
+
+        # Погрешности
+        df['x_std_px'] = df['x_px'].rolling(window=smooth_window, center=True).std()
+        df['y_std_px'] = df['y_px'].rolling(window=smooth_window, center=True).std()
+        df['err_x'] = df['x_std_px'] * pixel_size
+        df['err_y'] = df['y_std_px'] * pixel_size
+
+        df['v_x_raw'] = (df['x_m'].diff() / df['dt']).fillna(0)
+        df['v_y_raw'] = (df['y_m'].diff() / df['dt']).fillna(0)
+        df['v_raw'] = np.sqrt(df['v_x_raw']**2 + df['v_y_raw']**2)
+        df['err_v'] = df['v_raw'].rolling(window=smooth_window, center=True).std()
+
+
         
         def safe_list(series): return series.tolist()
 
@@ -160,6 +173,9 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
             'a': safe_list(df['a']),
             'a_x': safe_list(df['a_x']),
             'a_y': safe_list(df['a_y']),
+            'err_x': safe_list(df['err_x']),
+            'err_y': safe_list(df['err_y']),
+            'err_v': safe_list(df['err_v']),
         }
 
         print("Расчет завершен успешно.", flush=True)
