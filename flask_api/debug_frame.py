@@ -2,7 +2,7 @@ import cv2
 from ultralytics import YOLO
 
 VIDEO_PATH = "../inputs/cars1.mp4" 
-MODEL_PATH = 'blurry.pt'
+MODEL_PATH = 'blurry-f.pt'
 
 # Время, cек кадра
 TARGET_TIME = 0

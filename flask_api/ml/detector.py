@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import os
 
-model = YOLO("./ml/blurry.pt")
+model = YOLO("./ml/blurry-f.pt")
 
 
 def process_image(image_path) -> list:

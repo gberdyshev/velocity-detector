@@ -35,7 +35,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict, w
         print(f"--- Начинаем обработку: {video_path} ---", flush=True)
         logging.info("Начинаем")
         
-        model = YOLO("./ml/blurry.pt")
+        model = YOLO("./ml/blurry-f.pt")
         
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():

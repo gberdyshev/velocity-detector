@@ -6,7 +6,7 @@ from collections import defaultdict
 
 AVG_OBJECT_WIDTH_METERS = 1.7 # Средняя ширина авто
 MAX_PIXEL_DISTANCE_PER_FRAME = 50 
-MODEL_PATH = 'blurry.pt'
+MODEL_PATH = 'blurry-f.pt'
 VIDEO_PATH = "inputs/cars1.mp4"
 
 model = YOLO(MODEL_PATH)
