@@ -80,7 +80,7 @@ async def create_job(files_data):
         selected_time = meta['selected_frame_time']
         detect_obj = meta['detect_object']
         pixel_size = meta['pixel_size']
-        if meta[weight] is None:
+        if meta['weight'] is None:
             weight = 0
         else:
             weight = meta['weight']
