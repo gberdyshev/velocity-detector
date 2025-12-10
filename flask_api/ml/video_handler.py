@@ -143,10 +143,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         
         df['a'] = df['v_smooth'].diff() / df['dt']
         df['a_x'] = df['v_x_smooth'].diff() / df['dt']
-        df['a_y'] = df['v_y_smooth'].diff() / df['dt']
-        
-        # Заполняем NaN нулями
-        df = df.fillna(0.0)
+        df['a_y'] = df['v_y_smooth'].diff() / df['dt']        
 
         # Погрешности
         df['x_std_px'] = df['x_px'].rolling(window=smooth_window, center=True).std()
@@ -155,6 +152,9 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         df['err_y'] = df['y_std_px'] * pixel_size
 
         df['err_v'] = df['v'].rolling(window=smooth_window, center=True).std()
+
+        # Заполняем NaN нулями
+        df = df.fillna(0.0)
 
 
         
