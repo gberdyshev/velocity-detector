@@ -62,6 +62,9 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict, w
         
         print(f"Целевой кадр: {target_frame_idx} из {total_frames}", flush=True)
 
+
+        frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -79,7 +82,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict, w
                     all_tracks_history[trk_id].append({
                         'time': current_time,
                         'x_px': boxes_wh[i][0],
-                        'y_px': boxes_wh[i][1]
+                        'y_px': frame_height - boxes_wh[i][1]
                     })
                 
                 if current_frame_idx == target_frame_idx:
