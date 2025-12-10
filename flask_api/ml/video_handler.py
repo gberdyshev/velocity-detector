@@ -118,8 +118,8 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         
         smooth_window = max(5, int(fps)) 
         
-        df['x_smooth'] = df['x_px'].rolling(window=smooth_window, center=True).mean()
-        df['y_smooth'] = df['y_px'].rolling(window=smooth_window, center=True).mean()
+        df['x_smooth'] = df['x_px'].rolling(window=smooth_window, center=True, min_periods=1).mean()
+        df['y_smooth'] = df['y_px'].rolling(window=smooth_window, center=True, min_periods=1).mean()
         
         df = df.dropna()
         
@@ -137,9 +137,9 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         df['v'] = np.sqrt(df['v_x']**2 + df['v_y']**2)
         
 
-        df['v_smooth'] = df['v'].rolling(window=smooth_window, center=True).mean()
-        df['v_x_smooth'] = df['v_x'].rolling(window=smooth_window, center=True).mean()
-        df['v_y_smooth'] = df['v_y'].rolling(window=smooth_window, center=True).mean()
+        df['v_smooth'] = df['v'].rolling(window=smooth_window, center=True, min_periods=1).mean()
+        df['v_x_smooth'] = df['v_x'].rolling(window=smooth_window, center=True, min_periods=1).mean()
+        df['v_y_smooth'] = df['v_y'].rolling(window=smooth_window, center=True, min_periods=1).mean()
         
         df['a'] = df['v_smooth'].diff() / df['dt']
         df['a_x'] = df['v_x_smooth'].diff() / df['dt']
@@ -154,6 +154,7 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         df['err_v'] = df['v'].rolling(window=smooth_window, center=True).std()
 
         # Заполняем NaN нулями
+        df = df.ffill().bfill()
         df = df.fillna(0.0)
 
 
