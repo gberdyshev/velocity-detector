@@ -28,8 +28,9 @@ def calculate_iou(box1, box2):
     if union_area == 0: return 0.0
     return intersection_area / union_area
 
-def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
+def process_video_task(video_path, pixel_size, selected_time, target_box_dict, weight):
     cap = None
+    g = 9.80665
     try:
         print(f"--- Начинаем обработку: {video_path} ---", flush=True)
         logging.info("Начинаем")
@@ -143,7 +144,19 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict):
         
         df['a'] = df['v_smooth'].diff() / df['dt']
         df['a_x'] = df['v_x_smooth'].diff() / df['dt']
-        df['a_y'] = df['v_y_smooth'].diff() / df['dt']        
+        df['a_y'] = df['v_y_smooth'].diff() / df['dt']     
+
+        df['F_x'] = weight * df['a_x']
+        df['F_y'] = weight * df['a_y']
+        df['F'] = weight * df['a']
+
+        df['p_x'] = weight * df['v_x_smooth']
+        df['p_y'] = weight * df['v_y_smooth']
+        df['p'] = weight * df['v_smooth']
+
+
+        df['Ek'] = (weight * df['v_smooth']**2) / 2
+        df['Ep'] = weight * g * df['y_m']
 
         # Погрешности
         df['x_std_px'] = df['x_px'].rolling(window=smooth_window, center=True).std()

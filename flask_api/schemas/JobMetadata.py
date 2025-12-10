@@ -7,3 +7,4 @@ class JobMetadata(Schema):
     selected_frame_time = Float(required=True)
     detect_object = Nested(DetectObject, required=True)
     pixel_size = Float(required=True)
+    weight = Float()

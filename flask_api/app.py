@@ -38,10 +38,10 @@ async def detect_obj(files_data):
     return results
 
 
-def job_wrapper(job_id, pixel_size, filepath, selected_time, detect_obj):
+def job_wrapper(job_id, pixel_size, filepath, selected_time, detect_obj, weight):
     try:
         JOBS[job_id]['status'] = 'processing'
-        result_data = process_video_task(filepath, pixel_size, selected_time, detect_obj)
+        result_data = process_video_task(filepath, pixel_size, selected_time, detect_obj, weight)
         JOBS[job_id]['data'] = result_data
         JOBS[job_id]['status'] = 'done'
     except:
@@ -80,9 +80,10 @@ async def create_job(files_data):
         selected_time = meta['selected_frame_time']
         detect_obj = meta['detect_object']
         pixel_size = meta['pixel_size']
+        weight - meta['weight']
         print(detect_obj)
 
-        executor.submit(job_wrapper, job_id, pixel_size, filepath, selected_time, detect_obj)
+        executor.submit(job_wrapper, job_id, pixel_size, filepath, selected_time, detect_obj, weight)
         # executor.submit(
         #     process_video_task, 
         #     job_id, 
