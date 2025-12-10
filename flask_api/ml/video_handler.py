@@ -187,6 +187,16 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict, w
             'err_x': safe_list(df['err_x']),
             'err_y': safe_list(df['err_y']),
             'err_v': safe_list(df['err_v']),
+
+            'F_x': safe_list(df['F_x']),
+            'F_y': safe_list(df['F_y']),
+            'F': safe_list(df['F']),
+            'p_x': safe_list(df['p_x']),
+            'p_y': safe_list(df['p_y']),
+            'p': safe_list(df['p']),
+            'Ek': safe_list(df['Ek']),
+            'Ep': safe_list(df['Ep']),
+
         }
 
         print("Расчет завершен успешно.", flush=True)
