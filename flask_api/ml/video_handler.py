@@ -145,9 +145,10 @@ def process_video_task(video_path, pixel_size, selected_time, target_box_dict, w
         df['v_x_smooth'] = df['v_x'].rolling(window=smooth_window, center=True, min_periods=1).mean()
         df['v_y_smooth'] = df['v_y'].rolling(window=smooth_window, center=True, min_periods=1).mean()
         
-        df['a'] = df['v_smooth'].diff() / df['dt']
+        # df['a'] = df['v_smooth'].diff() / df['dt']
         df['a_x'] = df['v_x_smooth'].diff() / df['dt']
-        df['a_y'] = df['v_y_smooth'].diff() / df['dt']     
+        df['a_y'] = df['v_y_smooth'].diff() / df['dt']
+        df['a'] = np.sqrt(df['a_x']**2 + df['a_y']**2)     
 
         df['F_x'] = weight * df['a_x']
         df['F_y'] = weight * df['a_y']
